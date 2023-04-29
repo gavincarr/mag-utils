@@ -1,0 +1,283 @@
+-
+  name: Unit 03
+  unit: 3
+  vocab:
+    -
+      gr: ἀγγελος, ἀγγελου, ὁ
+      en: messenger, herald
+      cog: angel
+      pos: n
+    -
+      gr: ἀδελφος, ἀδελφου, ὁ
+      en: brother
+      cog: Philadelphia
+      pos: n
+    -
+      gr: ἀνεμος, ἀνεμου, ὁ
+      en: wind
+      cog: anemometer
+      pos: n
+    -
+      gr: ἀωθρωπος, ἀνθρωπου, ὁ
+      en: human being, man (occasionally fem., woman)
+      cog: anthropology
+      pos: n
+    -
+      gr: βιος, βιου, ὁ
+      en: life, manner of living, livelihood
+      cog: biology
+      pos: n
+    -
+      gr: διδασκαλος, διδασκαλου, ὁ
+      en: teacher; trainer of a chorus, producer of a play
+      cog: Didaskalia, didactic
+      pos: n
+    -
+      gr: ἡλιος, ἡλιου, ὁ
+      en: sun
+      cog: helium
+      pos: n
+    -
+      gr: θανατος, θανατου, ὁ
+      en: death
+      cog: euthansia
+      pos: n
+    -
+      gr: θεοσ, θεοθ, ὁ
+      en: god, divinity (occasionally fem., goddess)
+      cog: theology
+      pos: n
+    -
+      gr: ἱππος, ἱππου, ὁ
+      en: horse (also fem., mare)
+      cog: hippopotamus
+      pos: n
+    -
+      gr: λογος, λογου, ὁ
+      en: word, speech, tale, story; reckoning, account, proportion; reason, rationality
+      cog: philology
+      pos: n
+    -
+      gr: νομος, νομου, ὁ
+      en: custom; law
+      cog: economic
+      pos: n
+    -
+      gr: οἰκος, οἰκου, ὁ
+      en: house, dwelling place; household
+      cog: ecology, economy, ecosystem
+      pos: n
+    -
+      gr: πολεμος, πολεμου, ὁ
+      en: war
+      cog: polemic
+      pos: n
+    -
+      gr: στρατηγος, στρατηγου, ὁ
+      en: general
+      cog: strategic
+      pos: n
+    -
+      gr: στρατος, στρατου, ὁ
+      en: army, host
+      cog: strategic
+      pos: n
+    -
+      gr: φοβος, φοβου, ὁ
+      en: fear
+      cog: phobia, Phobos
+      pos: n
+    -
+      gr: νοσος, νοσου, ἡ
+      en: sickness, disease
+      cog: nosology
+      pos: n
+    -
+      gr: ὁσος, ὁσου, ἡ
+      en: road, path, way; journey
+      cog: odometer, method
+      pos: n
+    -
+      gr: ψηφος, ψηφου, ἡ
+      en: small stone, pebble (used in reckoning, in games, in voting); vote
+      cog: psephologist
+      pos: n 
+    -
+      gr: βιβλιον, βιβλιου, το
+      en: book
+      cog: bibliophile
+      pos: n
+    -
+      gr: δωρον, δωρου, το
+      en: gift; (in political or judicial contexts) bribe
+      cog: Eudora
+      pos: n
+    -
+      gr: ἐργον, ἐργου, το
+      en: work, action, deed
+      cog: erg, energy
+      pos: n
+    -
+      gr: μετρον, μετρου, το
+      en: measure, size, distance; moderate amount, proportion
+      cog: meter
+      pos: n
+    -
+      gr: παιδιον, παιδιου, το
+      en: child
+      cog: pediatrics
+      pos: n
+    -
+      gr: ἀπο / ἀπ᾽ / ἀφ᾽
+      en: (+ gen.) away from, from
+      cog: aphelion, apogee, apocalypse
+      pos: prep
+    -
+      gr: ἐκ / ἐξ
+      en: (+ gen.) out of, forth from; as a result of
+      cog: eclectic, ecdysiast
+      pos: prep
+    -
+      gr: ἐν
+      en: (+ dat.) in, within, on, at, among
+      cog: encaustic, empathy, ellipsis
+      pos: prep
+    -
+      gr: εἰς / ἐς
+      en: (+ acc.) into, to, toward; with respect to
+      cog: isagogic
+      pos: prep
+    -
+      gr: συν
+      en: (+ dat.) together with, with
+      cog: synonym, sympathy
+      pos: prep
+    -
+      gr: ἀλλα
+      en: but, but rather
+      pos: conj
+    -
+      gr: και
+      en: and; (adverbial) even, also, too
+      pos: conj
+    -
+      gr: οὐ / οὐκ / οὐχ
+      en: not (negating statements, words, or phrases)
+      cog: Utopia
+      pos: neg
+-
+  name: Unit 04
+  unit: 4
+  vocab:
+    -
+      gr: ἁγορα, ἁγορας, ἠ
+      en: assembly, place of assembly; marketplace
+      cog: agoraphobia
+      pos: n
+    -
+      gr: Ἀσπασια, Ἀσπασιας, ἡ
+      en: Aspasia (female proper name)
+      pos: n
+    -
+      gr: δημοκρατια, δημοκρατιασς, ἠ
+      en: democracy
+      pos: n
+    -
+      gr: ἡμερα, ἡμερας, ἡ
+      en: day
+      cog: ephemeral
+      pos: n
+    -
+      gr: θεα, θεας, ἡ
+      en: goddess
+      pos: n
+    -
+      gr: θυρα, θυρας, ἡ
+      en: door; (freq. pl.) double doors, folding doors
+      pos: n
+    -
+      gr: παιδεια, παιδειας, ἡ
+      en: education, training, culture
+      cog: propaedeutic
+      pos: n
+    -
+      gr: στρατια, στρατιας, ἡ
+      en: army
+      cog: strategy
+      pos: n
+    -
+      gr: συμφορα, συμφορας, ἡ
+      en: event, happening, circumstance; unlucky event, misfortune
+      pos: n
+    -
+      gr: φιλια, φιλιας, ἡ
+      en: friendship
+      cog: bibliophily
+      pos: n
+    -
+      gr: χωρα, χωρας, ἡ
+      en: land, country; space, room, place
+      cog: chorology
+      pos: n
+    -
+      gr: ἁδελφη, ἁδελφης, ἡ
+      en: sister
+      pos: n
+    -
+      gr: ἁρετη, ἁρετης, ἡ
+      en: excellence; valor, virtue
+      cog: aretalogy
+      pos: n
+    -
+      gr: ἁρχη, ἁρχης, ἡ
+      en: beginning; rule, office; realm, province
+      cog: monarchy
+      pos: n
+    -
+      gr: γνωμη, γνωμης, ἡ
+      en: faculty of judgment; opinion, decision, verdict
+      cog: gnomic
+      pos: n
+    -
+      gr: δικη, δικης, ἡ
+      en: justice, right; lawsuit; punishment (levied in a suit)
+      cog: syndic
+      pos: n
+    -
+      gr: ἡδονη, ἡδονης, ἡ
+      en: pleasure
+      cog: hedonist
+      pos: n
+    -
+      gr: νικη, νικης, ἡ
+      en: victory
+      cog: epinician
+      pos: n
+    -
+      gr: Ξανθιππη, Ξανθιππης, ἡ
+      en: Xanthippe (female proper name)
+      pos: n
+    -
+      gr: σκηνη, σκηνης, ἡ
+      en: tent, booth; stage building; stage
+      cog: scene
+      pos: n
+    -
+      gr: τιμη, τιμης, ἡ
+      en: honor; esteem; price
+      cog: timocratic
+      pos: n
+    -
+      gr: φυγη, φυγης, ἡ
+      en: running away, flight; exile
+      pos: n
+    -
+      gr: φωνη, φωνης, ἡ
+      en: sound; voice
+      cog: phonetic
+      pos: n
+    -
+      gr: ψυχη, ψυχης, ἡ
+      en: breath of life; life; soul
+      cog: psyche
+      pos: n

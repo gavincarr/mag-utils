@@ -1,0 +1,2 @@
+- update lint_vocab to check for greek words w/o accents (excl. enclitics)
+- add a lint_pp utility
