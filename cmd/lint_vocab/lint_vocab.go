@@ -14,10 +14,6 @@ import (
 	yaml "gopkg.in/yaml.v3"
 )
 
-const (
-	defaultDataset = "vocab.yml"
-)
-
 var (
 	rePos = regexp.MustCompile(`^(n|v|adj|adv|pron|prep|conj|part)$`)
 )
@@ -40,7 +36,7 @@ type Options struct {
 	Verbose bool `short:"v" long:"verbose" description:"display verbose output"`
 	Unit    int  `short:"u" long:"unit" description:"lint only this unit number"`
 	Args    struct {
-		Filename string
+		Filename string `description:"vocab yml dataset to read" default:"vocab.yml"`
 	} `positional-args:"yes"`
 }
 
@@ -121,10 +117,7 @@ func LintVocab(wtr io.Writer, opts Options, vocab []UnitVocab, stats *map[string
 }
 
 func RunCLI(wtr io.Writer, opts Options) error {
-	dataset := defaultDataset
-	if opts.Args.Filename != "" {
-		dataset = opts.Args.Filename
-	}
+	dataset := opts.Args.Filename
 	data, err := os.ReadFile(dataset)
 	if err != nil {
 		return err
