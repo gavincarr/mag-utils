@@ -17,8 +17,8 @@ import (
 
 const (
 	deckNameGrEn  = "Mastronarde Attic Greek Greek-to-English"
-	csvHeader     = "Greek,English,Cognates,PartOfSpeech,DeckName"
-	deckColumnPos = 5
+	csvHeader     = "Front,Back,DeckName"
+	deckColumnPos = 3
 )
 
 type Word struct {
@@ -39,7 +39,7 @@ type Options struct {
 	Verbose bool   `short:"v" long:"verbose" description:"display verbose output"`
 	Unit    int    `short:"u" long:"unit" description:"export only this unit number"`
 	Count   int    `short:"c" long:"count" description:"export only this many entries"`
-	Outfile string `short:"o" long:"output" description:"path to output filename (use stdout if not set)"`
+	Outfile string `short:"o" long:"outfile" description:"path to output filename (use stdout if not set)"`
 	Args    struct {
 		Filename string `description:"vocab yml dataset to read" default:"vocab.yml"`
 	} `positional-args:"yes"`
@@ -131,7 +131,14 @@ func main() {
 		os.Exit(2)
 	}
 
-	err = RunCLI(os.Stdout, opts)
+	wtr := os.Stdout
+	if opts.Outfile != "" {
+		wtr, err = os.Create(opts.Outfile)
+		if err != nil {
+			log.Fatal("opening outfile: ", err)
+		}
+	}
+	err = RunCLI(wtr, opts)
 	if err != nil {
 		log.Fatal(err)
 	}
