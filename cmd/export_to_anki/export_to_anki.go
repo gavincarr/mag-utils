@@ -9,6 +9,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"regexp"
 	"strings"
 
 	flags "github.com/jessevdk/go-flags"
@@ -16,17 +17,32 @@ import (
 )
 
 const (
-	deckNameGrEn  = "Mastronarde Attic Greek Greek-to-English"
-	csvComment    = "# This is an export of the MAG vocab dataset in Anki CSV format"
-	csvHeader     = "Front,Back,DeckName"
-	deckColumnPos = 3
+	deckNameGrEn   = "Mastronarde Attic Greek Vocab (Greek-to-English)"
+	csvCommentGrEn = "# This is an export of the MAG vocab dataset in Anki CSV format (Greek-to-English)"
+	csvHeader      = "ID,Front,Back,Tags,DeckName"
+	deckColumnPos  = 5
+)
+
+var (
+	reCommaStar = regexp.MustCompile(`,.*$`)
+	posMap      = map[string]string{
+		"adj":  "adjective",
+		"adv":  "adverb",
+		"conj": "conjunction",
+		"n":    "noun",
+		"part": "particle",
+		"prep": "preposition",
+		"pron": "pronoun",
+		"v":    "verb",
+	}
 )
 
 type Word struct {
-	Gr  string
-	En  string
-	Cog string
-	Pos string
+	Gr    string
+	GrExt string
+	En    string
+	Cog   string
+	Pos   string
 }
 
 type UnitVocab struct {
@@ -50,9 +66,10 @@ type Options struct {
 func exportVocab(wtr io.Writer, vocab []UnitVocab, opts Options) error {
 	cwtr := csv.NewWriter(wtr)
 	count := 1
+	idmap := make(map[string]struct{})
 
 	// Output file headers
-	fmt.Fprintln(wtr, csvComment)
+	fmt.Fprintln(wtr, csvCommentGrEn)
 	fmt.Fprintln(wtr, "#separator:Comma")
 	fmt.Fprintf(wtr, "#columns:%s\n", csvHeader)
 	fmt.Fprintf(wtr, "#deck column:%d\n", deckColumnPos)
@@ -64,9 +81,30 @@ func exportVocab(wtr io.Writer, vocab []UnitVocab, opts Options) error {
 		}
 
 		for _, w := range u.Vocab {
+			id := reCommaStar.ReplaceAllString(w.Gr, "")
+
+			// Make sure ids are unique
+			if _, exists := idmap[id]; exists {
+				log.Fatal("duplicate ids found: ", id)
+			}
+			idmap[id] = struct{}{}
+
+			front := w.Gr
+			if w.GrExt != "" {
+				front = w.Gr + " " + w.GrExt
+			}
+			back := w.En
+			pos, ok := posMap[w.Pos]
+			if !ok {
+				log.Fatalf("bad POS %q found on word %q/%q",
+					w.Pos, w.Gr, w.En)
+			}
+			tags := []string{"pos::" + pos}
+			tagstr := strings.Join(tags, " ")
 			deck := strings.Join([]string{deckNameGrEn, u.Name}, "::")
-			//err := cwtr.Write([]string{w.Gr, w.En, w.Cog, w.Pos, deck})
-			err := cwtr.Write([]string{w.Gr, w.En, deck})
+
+			// Write entry
+			err := cwtr.Write([]string{id, front, back, tagstr, deck})
 			if err != nil {
 				return err
 			}
