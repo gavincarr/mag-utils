@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	deckName      = "Mastronarde Attic Greek GrEn"
+	deckNameGrEn  = "Mastronarde Attic Greek Greek-to-English"
 	csvHeader     = "Greek,English,Cognates,PartOfSpeech,DeckName"
 	deckColumnPos = 5
 )
@@ -62,7 +62,7 @@ func exportVocab(wtr io.Writer, vocab []UnitVocab, opts Options) error {
 		}
 
 		for _, w := range u.Vocab {
-			deck := strings.Join([]string{deckName, u.Name}, "::")
+			deck := strings.Join([]string{deckNameGrEn, u.Name}, "::")
 			err := cwtr.Write([]string{w.Gr, w.En, w.Cog, w.Pos, deck})
 			if err != nil {
 				return err
