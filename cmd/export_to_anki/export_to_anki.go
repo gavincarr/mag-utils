@@ -17,6 +17,7 @@ import (
 
 const (
 	deckNameGrEn  = "Mastronarde Attic Greek Greek-to-English"
+	csvComment    = "# This is an export of the MAG vocab dataset in Anki CSV format"
 	csvHeader     = "Front,Back,DeckName"
 	deckColumnPos = 3
 )
@@ -51,6 +52,7 @@ func exportVocab(wtr io.Writer, vocab []UnitVocab, opts Options) error {
 	count := 1
 
 	// Output file headers
+	fmt.Fprintln(wtr, csvComment)
 	fmt.Fprintln(wtr, "#separator:Comma")
 	fmt.Fprintf(wtr, "#columns:%s\n", csvHeader)
 	fmt.Fprintf(wtr, "#deck column:%d\n", deckColumnPos)
@@ -63,7 +65,8 @@ func exportVocab(wtr io.Writer, vocab []UnitVocab, opts Options) error {
 
 		for _, w := range u.Vocab {
 			deck := strings.Join([]string{deckNameGrEn, u.Name}, "::")
-			err := cwtr.Write([]string{w.Gr, w.En, w.Cog, w.Pos, deck})
+			//err := cwtr.Write([]string{w.Gr, w.En, w.Cog, w.Pos, deck})
+			err := cwtr.Write([]string{w.Gr, w.En, deck})
 			if err != nil {
 				return err
 			}
