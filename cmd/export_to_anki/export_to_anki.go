@@ -24,8 +24,11 @@ const (
 )
 
 var (
-	reCommaStar = regexp.MustCompile(`,.*$`)
-	posMap      = map[string]string{
+	reCommaStar  = regexp.MustCompile(`,.*$`)
+	reSemicolon  = regexp.MustCompile(`\pZ*;\pZ*`)
+	reCaseMarker = regexp.MustCompile(`^\(\+\pZ*(acc|gen|dat)\.?\)`)
+
+	posMap = map[string]string{
 		"adj":  "adjective",
 		"adv":  "adverb",
 		"conj": "conjunction",
@@ -39,8 +42,9 @@ var (
 
 type Word struct {
 	Gr    string
-	GrExt string
+	GrExt string `yaml:"gr_ext"`
 	En    string
+	EnExt string `yaml:"en_ext"`
 	Cog   string
 	Pos   string
 }
@@ -49,6 +53,12 @@ type UnitVocab struct {
 	Name  string
 	Unit  int
 	Vocab []Word
+}
+
+type CaseGloss struct {
+	Case   string
+	Marker string
+	Gloss  string
 }
 
 // Options
@@ -60,6 +70,38 @@ type Options struct {
 	Args    struct {
 		Filename string `description:"vocab yml dataset to read" default:"vocab.yml"`
 	} `positional-args:"yes"`
+}
+
+// parsePrepGlosses parses a gloss into one or more CaseGloss records,
+// where CaseGloss.Case is the bare case string ("acc", "gen", "dat"),
+// and CaseGloss.Gloss is the gloss entry for that case (including the
+// introductory "(+ case.)" fragment
+func parsePrepGlosses(gloss string) []CaseGloss {
+	entries := reSemicolon.Split(gloss, -1)
+	cglist := []CaseGloss{}
+	cg := CaseGloss{}
+	for i, entry := range entries {
+		matches := reCaseMarker.FindStringSubmatch(entry)
+		if matches == nil {
+			// The first entry not having a case marker is a fatal error
+			if i == 0 {
+				log.Fatalf("preposition entry without initial case marker: %s",
+					gloss)
+			}
+			// Subsequent entries without case markers just get appended to current
+			cg.Gloss += "; " + entry
+			continue
+		}
+
+		if cg.Case != "" {
+			cglist = append(cglist, cg)
+		}
+		cg = CaseGloss{Case: matches[1], Marker: matches[0], Gloss: entry}
+	}
+	if cg.Case != "" {
+		cglist = append(cglist, cg)
+	}
+	return cglist
 }
 
 // exportVocab exports vocab in Anki CSV format to wtr
@@ -88,25 +130,48 @@ func exportVocab(wtr io.Writer, vocab []UnitVocab, opts Options) error {
 				log.Fatal("duplicate ids found: ", id)
 			}
 			idmap[id] = struct{}{}
-
-			front := w.Gr
-			if w.GrExt != "" {
-				front = w.Gr + " " + w.GrExt
-			}
-			back := w.En
 			pos, ok := posMap[w.Pos]
 			if !ok {
 				log.Fatalf("bad POS %q found on word %q/%q",
 					w.Pos, w.Gr, w.En)
 			}
+
+			front := w.Gr
+			if w.GrExt != "" {
+				front = w.Gr + " " + w.GrExt
+			}
 			tags := []string{"pos::" + pos}
 			tagstr := strings.Join(tags, " ")
 			deck := strings.Join([]string{deckNameGrEn, u.Name}, "::")
 
-			// Write entry
-			err := cwtr.Write([]string{id, front, back, tagstr, deck})
-			if err != nil {
-				return err
+			// For prepositions, split into per-case entries
+			var glosses []CaseGloss
+			if w.Pos == "prep" {
+				glosses = parsePrepGlosses(w.En)
+			}
+			if len(glosses) > 1 {
+				//	fmt.Fprintf(os.Stderr, "%s: %v\n", id, glosses)
+				for _, cg := range glosses {
+					back := cg.Gloss
+					// Write entry
+					err := cwtr.Write([]string{
+						id + "-" + cg.Case,
+						front + " " + cg.Marker,
+						back, tagstr, deck})
+					if err != nil {
+						return err
+					}
+				}
+			} else {
+				back := w.En
+				if w.EnExt != "" {
+					back += " " + w.EnExt
+				}
+				// Write entry
+				err := cwtr.Write([]string{id, front, back, tagstr, deck})
+				if err != nil {
+					return err
+				}
 			}
 
 			count++
