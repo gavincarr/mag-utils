@@ -116,6 +116,7 @@ func exportVocab(wtr io.Writer, vocab []UnitVocab, opts Options) error {
 	fmt.Fprintln(wtr, "#separator:Comma")
 	fmt.Fprintf(wtr, "#columns:%s\n", csvHeader)
 	fmt.Fprintf(wtr, "#deck column:%d\n", deckColumnPos)
+	fmt.Fprintln(wtr, "#html:true")
 
 	// Output vocab entries
 	for _, u := range vocab {
@@ -154,6 +155,9 @@ func exportVocab(wtr io.Writer, vocab []UnitVocab, opts Options) error {
 			var glosses []CaseGloss
 			if w.Pos == "prep" {
 				glosses = parsePrepGlosses(w.En)
+				if w.EnExt != "" {
+					fmt.Fprintf(os.Stderr, "Warning: en_ext is unsupported with prepositions - skipping for %q\n", front)
+				}
 			}
 			if len(glosses) > 1 {
 				//	fmt.Fprintf(os.Stderr, "%s: %v\n", id, glosses)
@@ -174,7 +178,7 @@ func exportVocab(wtr io.Writer, vocab []UnitVocab, opts Options) error {
 			} else {
 				back := w.En
 				if w.EnExt != "" {
-					back += " " + w.EnExt
+					back += "<br><i>" + w.EnExt + "</i>"
 				}
 				// Write entry
 				err := cwtr.Write([]string{id, front, back, tagstr, deck})
