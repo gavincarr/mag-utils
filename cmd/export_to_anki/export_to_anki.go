@@ -144,7 +144,7 @@ func exportVocab(wtr io.Writer, vocab []UnitVocab, opts Options) error {
 
 			front := w.Gr
 			if w.GrExt != "" {
-				front = w.Gr + " " + w.GrExt
+				front += " " + w.GrExt
 			}
 			tags := []string{"pos::" + pos}
 			tagstr := strings.Join(tags, " ")
@@ -158,12 +158,15 @@ func exportVocab(wtr io.Writer, vocab []UnitVocab, opts Options) error {
 			if len(glosses) > 1 {
 				//	fmt.Fprintf(os.Stderr, "%s: %v\n", id, glosses)
 				for _, cg := range glosses {
+					front = w.Gr + " " + cg.Marker
+					if w.GrExt != "" {
+						front += " " + w.GrExt
+					}
 					back := cg.Gloss
 					// Write entry
 					err := cwtr.Write([]string{
 						id + "-" + cg.Case,
-						front + " " + cg.Marker,
-						back, tagstr, deck})
+						front, back, tagstr, deck})
 					if err != nil {
 						return err
 					}
