@@ -43,6 +43,7 @@ var (
 type Word struct {
 	Gr    string
 	GrExt string `yaml:"gr_ext"`
+	Id    string
 	En    string
 	EnExt string `yaml:"en_ext"`
 	Cog   string
@@ -123,7 +124,12 @@ func exportVocab(wtr io.Writer, vocab []UnitVocab, opts Options) error {
 		}
 
 		for _, w := range u.Vocab {
-			id := reCommaStar.ReplaceAllString(w.Gr, "")
+			var id string
+			if w.Id != "" {
+				id = w.Id
+			} else {
+				id = reCommaStar.ReplaceAllString(w.Gr, "")
+			}
 
 			// Make sure ids are unique
 			if _, exists := idmap[id]; exists {
