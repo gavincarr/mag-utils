@@ -180,6 +180,9 @@ func exportVocab(wtr io.Writer, vocab []UnitVocab, opts Options) error {
 				if w.EnExt != "" {
 					back += "<br><i>" + w.EnExt + "</i>"
 				}
+				if w.Cog != "" {
+					back += "<br>[" + w.Cog + "]"
+				}
 				// Write entry
 				err := cwtr.Write([]string{id, front, back, tagstr, deck})
 				if err != nil {
