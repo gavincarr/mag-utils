@@ -24,9 +24,10 @@ const (
 )
 
 var (
-	reCommaStar  = regexp.MustCompile(`,.*$`)
-	reSemicolon  = regexp.MustCompile(`\pZ*;\pZ*`)
-	reCaseMarker = regexp.MustCompile(`^\(\+\pZ*(acc|gen|dat)\.?\)`)
+	reCommaStar   = regexp.MustCompile(`,.*$`)
+	reSemicolon   = regexp.MustCompile(`\pZ*;\pZ*`)
+	reCaseMarker  = regexp.MustCompile(`^\(\+\pZ*(acc|gen|dat)\.?\)`)
+	reVoiceMarker = regexp.MustCompile(`^\((mid)\.?\)`)
 
 	posMap = map[string]string{
 		"adj":  "adjective",
@@ -42,6 +43,7 @@ var (
 
 type Word struct {
 	Gr    string
+	GrMP  string `yaml:"gr_mp"`
 	GrExt string `yaml:"gr_ext"`
 	Id    string
 	En    string
@@ -56,8 +58,9 @@ type UnitVocab struct {
 	Vocab []Word
 }
 
-type CaseGloss struct {
+type CaseVoiceGloss struct {
 	Case   string
+	Voice  string
 	Marker string
 	Gloss  string
 }
@@ -73,14 +76,14 @@ type Options struct {
 	} `positional-args:"yes"`
 }
 
-// parsePrepGlosses parses a gloss into one or more CaseGloss records,
-// where CaseGloss.Case is the bare case string ("acc", "gen", "dat"),
-// and CaseGloss.Gloss is the gloss entry for that case (including the
+// parsePrepGlosses parses a gloss into one or more CaseVoiceGloss records,
+// where CaseVoiceGloss.Case is the bare case string ("acc", "gen", "dat"),
+// and CaseVoiceGloss.Gloss is the gloss entry for that case (including the
 // introductory "(+ case.)" fragment
-func parsePrepGlosses(gloss string) []CaseGloss {
+func parsePrepGlosses(gloss string) []CaseVoiceGloss {
 	entries := reSemicolon.Split(gloss, -1)
-	cglist := []CaseGloss{}
-	cg := CaseGloss{}
+	cglist := []CaseVoiceGloss{}
+	cg := CaseVoiceGloss{}
 	for i, entry := range entries {
 		matches := reCaseMarker.FindStringSubmatch(entry)
 		if matches == nil {
@@ -97,9 +100,43 @@ func parsePrepGlosses(gloss string) []CaseGloss {
 		if cg.Case != "" {
 			cglist = append(cglist, cg)
 		}
-		cg = CaseGloss{Case: matches[1], Marker: matches[0], Gloss: entry}
+		cg = CaseVoiceGloss{Case: matches[1], Marker: matches[0], Gloss: entry}
 	}
 	if cg.Case != "" {
+		cglist = append(cglist, cg)
+	}
+	return cglist
+}
+
+func parseVoiceGlosses(gloss string) []CaseVoiceGloss {
+	entries := reSemicolon.Split(gloss, -1)
+	cglist := []CaseVoiceGloss{}
+	cg := CaseVoiceGloss{}
+	for _, entry := range entries {
+		matches := reVoiceMarker.FindStringSubmatch(entry)
+		if matches == nil {
+			// If no voice marker, just add to current
+			if cg.Gloss == "" {
+				cg.Gloss = entry
+			} else {
+				cg.Gloss += "; " + entry
+			}
+			continue
+		}
+
+		voice := matches[1]
+		if cg.Voice == voice {
+			// If we have multiple matches, just append to current
+			cg.Gloss += "; " + entry
+			continue
+		}
+
+		if cg.Gloss != "" {
+			cglist = append(cglist, cg)
+		}
+		cg = CaseVoiceGloss{Voice: voice, Gloss: entry}
+	}
+	if cg.Gloss != "" {
 		cglist = append(cglist, cg)
 	}
 	return cglist
@@ -152,25 +189,35 @@ func exportVocab(wtr io.Writer, vocab []UnitVocab, opts Options) error {
 			deck := strings.Join([]string{deckNameGrEn, u.Name}, "::")
 
 			// For prepositions, split into per-case entries
-			var glosses []CaseGloss
+			var glosses []CaseVoiceGloss
 			if w.Pos == "prep" {
 				glosses = parsePrepGlosses(w.En)
 				if w.EnExt != "" {
 					fmt.Fprintf(os.Stderr, "Warning: en_ext is unsupported with prepositions - skipping for %q\n", front)
 				}
+			} else if w.GrMP != "" {
+				// If a separate middle/passive form is defined, parse
+				// voice glosses
+				glosses = parseVoiceGlosses(w.En)
 			}
 			if len(glosses) > 1 {
-				//	fmt.Fprintf(os.Stderr, "%s: %v\n", id, glosses)
+				//fmt.Fprintf(os.Stderr, "+ %s: %v\n", id, glosses)
 				for _, cg := range glosses {
-					front = w.Gr + " " + cg.Marker
-					if w.GrExt != "" {
-						front += " " + w.GrExt
+					id2 := id
+					if cg.Case != "" {
+						id2 = id + "-" + cg.Case
+						front = w.Gr + " " + cg.Marker
+						if w.GrExt != "" {
+							front += " " + w.GrExt
+						}
+					} else if cg.Voice == "mid" && w.GrMP != "" {
+						id2 = w.GrMP
+						front = w.GrMP
 					}
 					back := cg.Gloss
 					// Write entry
 					err := cwtr.Write([]string{
-						id + "-" + cg.Case,
-						front, back, tagstr, deck})
+						id2, front, back, tagstr, deck})
 					if err != nil {
 						return err
 					}
