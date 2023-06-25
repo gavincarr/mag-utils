@@ -24,10 +24,11 @@ const (
 )
 
 var (
-	reCommaStar   = regexp.MustCompile(`,.*$`)
-	reSemicolon   = regexp.MustCompile(`\pZ*;\pZ*`)
-	reCaseMarker  = regexp.MustCompile(`^\(\+\pZ*(acc|gen|dat)\.?\)`)
-	reVoiceMarker = regexp.MustCompile(`^\((mid)\.?\)`)
+	reCommaStar            = regexp.MustCompile(`,.*$`)
+	reSemicolon            = regexp.MustCompile(`\pZ*;\pZ*`)
+	reSemicolonParenthesis = regexp.MustCompile(`\pZ*;\pZ*\(`)
+	reCaseMarker           = regexp.MustCompile(`^\(\+\pZ*(acc|gen|dat)\.?\)`)
+	reVoiceMarker          = regexp.MustCompile(`^\([^(]*(mid|pass)\.[^)]*\)`)
 
 	posMap = map[string]string{
 		"adj":  "adjective",
@@ -210,11 +211,13 @@ func exportVocab(wtr io.Writer, vocab []UnitVocab, opts Options) error {
 						if w.GrExt != "" {
 							front += " " + w.GrExt
 						}
-					} else if cg.Voice == "mid" && w.GrMP != "" {
+					} else if (cg.Voice == "mid" || cg.Voice == "pass") &&
+						w.GrMP != "" {
 						id2 = w.GrMP
 						front = w.GrMP
 					}
 					back := cg.Gloss
+					back = reSemicolonParenthesis.ReplaceAllString(back, "<br>(")
 					// Write entry
 					err := cwtr.Write([]string{
 						id2, front, back, tagstr, deck})
@@ -224,6 +227,7 @@ func exportVocab(wtr io.Writer, vocab []UnitVocab, opts Options) error {
 				}
 			} else {
 				back := w.En
+				back = reSemicolonParenthesis.ReplaceAllString(back, "<br>(")
 				if w.EnExt != "" {
 					back += "<br><i>" + w.EnExt + "</i>"
 				}
