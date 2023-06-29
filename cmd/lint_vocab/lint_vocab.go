@@ -1,4 +1,4 @@
-// mag utility to load and validate the vocab.yml dataset
+// mag-utils utility to load and validate the given mag vocab.yml dataset
 
 package main
 
