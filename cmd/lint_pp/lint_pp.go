@@ -51,7 +51,7 @@ func checkWord(word, pptype, label string) error {
 		}
 	*/
 	if !reEntry.MatchString(word) {
-		return errors.New(fmt.Sprintf("Bad %q entry found%s: %s",
+		return errors.New(fmt.Sprintf("Bad %q entry found%s: %q",
 			pptype, label, word))
 	}
 	return nil
