@@ -29,6 +29,7 @@ var (
 	reSemicolonParenthesis = regexp.MustCompile(`\pZ*;\pZ*\(`)
 	reCaseMarker           = regexp.MustCompile(`^\(\+\pZ*(acc|gen|dat)\.?\)`)
 	reVoiceMarker          = regexp.MustCompile(`^\([^(]*(mid|pass)\.[^)]*\)`)
+	rePluralMarker         = regexp.MustCompile(`^\(pl\.\)`)
 
 	posMap = map[string]string{
 		"adj":  "adjective",
@@ -45,6 +46,7 @@ var (
 type Word struct {
 	Gr    string
 	GrMP  string `yaml:"gr_mp"`
+	GrPl  string `yaml:"gr_pl"`
 	GrExt string `yaml:"gr_ext"`
 	Id    string
 	En    string
@@ -62,6 +64,7 @@ type UnitVocab struct {
 type CaseVoiceGloss struct {
 	Case   string
 	Voice  string
+	Plural bool
 	Marker string
 	Gloss  string
 }
@@ -78,9 +81,10 @@ type Options struct {
 }
 
 // parsePrepGlosses parses a gloss into one or more CaseVoiceGloss records,
+// breaking where a gloss includes a leading case marker (e.g. acc/gen/dat).
 // where CaseVoiceGloss.Case is the bare case string ("acc", "gen", "dat"),
 // and CaseVoiceGloss.Gloss is the gloss entry for that case (including the
-// introductory "(+ case.)" fragment
+// introductory "(+ case.)" Marker)
 func parsePrepGlosses(gloss string) []CaseVoiceGloss {
 	entries := reSemicolon.Split(gloss, -1)
 	cglist := []CaseVoiceGloss{}
@@ -109,6 +113,11 @@ func parsePrepGlosses(gloss string) []CaseVoiceGloss {
 	return cglist
 }
 
+// parseVoiceGlosses parses a gloss into one or more CaseVoiceGloss records,
+// breaking where a gloss includes a leading voice marker (e.g. mid/pass).
+// CaseVoiceGloss.Voice is the bare voice string ("mid" or "pass"),
+// and CaseVoiceGloss.Gloss is the gloss entry for that voice (including
+// the introductory "(voice.)" Marker)
 func parseVoiceGlosses(gloss string) []CaseVoiceGloss {
 	entries := reSemicolon.Split(gloss, -1)
 	cglist := []CaseVoiceGloss{}
@@ -136,6 +145,33 @@ func parseVoiceGlosses(gloss string) []CaseVoiceGloss {
 			cglist = append(cglist, cg)
 		}
 		cg = CaseVoiceGloss{Voice: voice, Gloss: entry}
+	}
+	if cg.Gloss != "" {
+		cglist = append(cglist, cg)
+	}
+	return cglist
+}
+
+func parsePluralGlosses(gloss string) []CaseVoiceGloss {
+	entries := reSemicolon.Split(gloss, -1)
+	cglist := []CaseVoiceGloss{}
+	cg := CaseVoiceGloss{}
+	for _, entry := range entries {
+		matches := rePluralMarker.FindStringSubmatch(entry)
+		if matches == nil {
+			// If no plural marker, just add to current
+			if cg.Gloss == "" {
+				cg.Gloss = entry
+			} else {
+				cg.Gloss += "; " + entry
+			}
+			continue
+		}
+
+		if cg.Gloss != "" {
+			cglist = append(cglist, cg)
+		}
+		cg = CaseVoiceGloss{Plural: true, Gloss: entry}
 	}
 	if cg.Gloss != "" {
 		cglist = append(cglist, cg)
@@ -200,9 +236,12 @@ func exportVocab(wtr io.Writer, vocab []UnitVocab, opts Options) error {
 				// If a separate middle/passive form is defined, parse
 				// voice glosses
 				glosses = parseVoiceGlosses(w.En)
+			} else if w.GrPl != "" {
+				// If a separate plural form is defined, parse plural glosses
+				glosses = parsePluralGlosses(w.En)
 			}
+			//fmt.Fprintf(os.Stderr, "+ %s: %v\n", id, glosses)
 			if len(glosses) > 1 {
-				//fmt.Fprintf(os.Stderr, "+ %s: %v\n", id, glosses)
 				for _, cg := range glosses {
 					id2 := id
 					if cg.Case != "" {
@@ -215,6 +254,9 @@ func exportVocab(wtr io.Writer, vocab []UnitVocab, opts Options) error {
 						w.GrMP != "" {
 						id2 = w.GrMP
 						front = w.GrMP
+					} else if w.GrPl != "" && cg.Plural {
+						id2 = reCommaStar.ReplaceAllString(w.GrPl, "")
+						front = w.GrPl
 					}
 					back := cg.Gloss
 					back = reSemicolonParenthesis.ReplaceAllString(back, "<br>(")
