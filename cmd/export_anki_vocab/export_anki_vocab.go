@@ -83,8 +83,7 @@ type Options struct {
 // parsePrepGlosses parses a gloss into one or more CaseVoiceGloss records,
 // breaking where a gloss includes a leading case marker (e.g. acc/gen/dat).
 // where CaseVoiceGloss.Case is the bare case string ("acc", "gen", "dat"),
-// and CaseVoiceGloss.Gloss is the gloss entry for that case (including the
-// introductory "(+ case.)" Marker)
+// and CaseVoiceGloss.Gloss is the gloss entry for that case
 func parsePrepGlosses(gloss string) []CaseVoiceGloss {
 	entries := reSemicolon.Split(gloss, -1)
 	cglist := []CaseVoiceGloss{}
@@ -105,7 +104,9 @@ func parsePrepGlosses(gloss string) []CaseVoiceGloss {
 		if cg.Case != "" {
 			cglist = append(cglist, cg)
 		}
-		cg = CaseVoiceGloss{Case: matches[1], Marker: matches[0], Gloss: entry}
+		// Remove case marker from the gloss
+		gloss := strings.TrimSpace(strings.Replace(entry, matches[0], "", 1))
+		cg = CaseVoiceGloss{Case: matches[1], Marker: matches[0], Gloss: gloss}
 	}
 	if cg.Case != "" {
 		cglist = append(cglist, cg)
