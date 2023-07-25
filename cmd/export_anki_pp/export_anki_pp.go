@@ -17,8 +17,12 @@ import (
 )
 
 const (
-	deckNameGrEn   = "Mastronarde Attic Greek Principal Parts (Greek-to-English)"
+	decknameGrEn   = "Mastronarde Attic Greek Principal Parts (Greek-to-English)"
 	csvCommentGrEn = "# This is an export of the MAG principal parts dataset in Anki CSV format (Greek-to-English)"
+	notetypeGrEn   = "MAG PP GrEn"
+	decknameEnGr   = "Mastronarde Attic Greek Principal Parts (English-to-Greek)"
+	csvCommentEnGr = "# This is an export of the MAG principal parts dataset in Anki CSV format (English-to-Greek)"
+	notetypeEnGr   = "MAG PP EnGr"
 	csvHeader      = "ID,Front,Back,Tags,DeckName"
 	deckColumnPos  = 5
 )
@@ -48,16 +52,21 @@ type Options struct {
 	Verbose bool   `short:"v" long:"verbose" description:"display verbose output"`
 	Unit    int    `short:"u" long:"unit" description:"export only this unit number"`
 	Num     int    `short:"n" long:"num" description:"export only the first N principal parts (2-6)" default:"6"`
+	Reverse bool   `short:"r" long:"rev" description:"export in reverse output format i.e. English-to-Greek"`
 	Outfile string `short:"o" long:"outfile" description:"path to output filename (use stdout if not set)"`
 	Args    struct {
 		Filename string `description:"pp yml dataset to read" default:"pp.yml"`
 	} `positional-args:"yes"`
 }
 
-func exportSingleEntry(cwtr *csv.Writer, u UnitPP, id, label, ppstr, conj string, n int) error {
+func exportSingleEntry(
+	cwtr *csv.Writer,
+	deck, id, label, ppstr, conj string,
+	n int,
+	reverse bool,
+) error {
 	labeltag := reSpace.ReplaceAllString(strings.ToLower(label), "_")
 	tagstr := "pp::" + labeltag
-	deck := strings.Join([]string{deckNameGrEn, u.Name}, "::")
 
 	nstr := ""
 	if n > 0 {
@@ -72,7 +81,12 @@ func exportSingleEntry(cwtr *csv.Writer, u UnitPP, id, label, ppstr, conj string
 	}
 	back := fmt.Sprintf("%s%s of %s%s", label, nstr, id, meaning)
 
-	err := cwtr.Write([]string{ppstr, ppstr, back, tagstr, deck})
+	var err error
+	if !reverse {
+		err = cwtr.Write([]string{ppstr, ppstr, back, tagstr, deck})
+	} else {
+		err = cwtr.Write([]string{ppstr, back, ppstr, tagstr, deck})
+	}
 	if err != nil {
 		return err
 	}
@@ -80,10 +94,10 @@ func exportSingleEntry(cwtr *csv.Writer, u UnitPP, id, label, ppstr, conj string
 	return nil
 }
 
-func exportEntry(cwtr *csv.Writer, u UnitPP, id, label, ppstr string) error {
+func exportEntry(cwtr *csv.Writer, deck, id, label, ppstr string, reverse bool) error {
 	matches := reAlternates.FindStringSubmatch(ppstr)
 	if matches == nil {
-		return exportSingleEntry(cwtr, u, id, label, ppstr, "", 0)
+		return exportSingleEntry(cwtr, deck, id, label, ppstr, "", 0, reverse)
 	}
 
 	paren1 := matches[1]
@@ -100,11 +114,11 @@ func exportEntry(cwtr *csv.Writer, u UnitPP, id, label, ppstr string) error {
 		part2 = "(" + part2 + ")"
 	}
 
-	err := exportSingleEntry(cwtr, u, id, label, part1, conj, 1)
+	err := exportSingleEntry(cwtr, deck, id, label, part1, conj, 1, reverse)
 	if err != nil {
 		return err
 	}
-	err = exportSingleEntry(cwtr, u, id, label, part2, conj, 2)
+	err = exportSingleEntry(cwtr, deck, id, label, part2, conj, 2, reverse)
 	if err != nil {
 		return err
 	}
@@ -117,15 +131,26 @@ func exportPP(wtr io.Writer, upp []UnitPP, opts Options) error {
 	cwtr := csv.NewWriter(wtr)
 	idmap := make(map[string]struct{})
 
+	comment := csvCommentGrEn
+	notetype := notetypeGrEn
+	deckname := decknameGrEn
+	if opts.Reverse {
+		comment = csvCommentEnGr
+		notetype = notetypeEnGr
+		deckname = decknameEnGr
+	}
+
 	// Output file headers
-	fmt.Fprintln(wtr, csvCommentGrEn)
+	fmt.Fprintln(wtr, comment)
 	fmt.Fprintln(wtr, "#separator:Comma")
 	fmt.Fprintf(wtr, "#columns:%s\n", csvHeader)
+	fmt.Fprintf(wtr, "#notetype:%s\n", notetype)
 	fmt.Fprintf(wtr, "#deck column:%d\n", deckColumnPos)
 	fmt.Fprintln(wtr, "#html:false")
 
 	// Output pp entries
 	for _, u := range upp {
+		deck := strings.Join([]string{deckname, u.Name}, "::")
 		for _, pp := range u.PP {
 			if opts.Unit > 0 && u.Unit != opts.Unit {
 				continue
@@ -140,19 +165,19 @@ func exportPP(wtr io.Writer, upp []UnitPP, opts Options) error {
 
 			// Export entries for each principal part
 			if pp.Future != "" {
-				exportEntry(cwtr, u, id, "Future", pp.Future)
+				exportEntry(cwtr, deck, id, "Future", pp.Future, opts.Reverse)
 			}
 			if opts.Num >= 3 && pp.Aorist != "" {
-				exportEntry(cwtr, u, id, "Aorist", pp.Aorist)
+				exportEntry(cwtr, deck, id, "Aorist", pp.Aorist, opts.Reverse)
 			}
 			if opts.Num >= 4 && pp.Perfect != "" {
-				exportEntry(cwtr, u, id, "Perfect", pp.Perfect)
+				exportEntry(cwtr, deck, id, "Perfect", pp.Perfect, opts.Reverse)
 			}
 			if opts.Num >= 5 && pp.PerfMid != "" {
-				exportEntry(cwtr, u, id, "Perfect Middle", pp.PerfMid)
+				exportEntry(cwtr, deck, id, "Perfect Middle", pp.PerfMid, opts.Reverse)
 			}
 			if opts.Num == 6 && pp.AorPass != "" {
-				exportEntry(cwtr, u, id, "Aorist Passive", pp.AorPass)
+				exportEntry(cwtr, deck, id, "Aorist Passive", pp.AorPass, opts.Reverse)
 			}
 		}
 	}
