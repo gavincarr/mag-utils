@@ -17,10 +17,10 @@ import (
 )
 
 const (
-	decknameGrEn   = "Mastronarde Attic Greek Principal Parts (Greek-to-English)"
+	decknameGrEn   = "Mastronarde AtticGreek Principal Parts (GrEn)"
 	csvCommentGrEn = "# This is an export of the MAG principal parts dataset in Anki CSV format (Greek-to-English)"
 	notetypeGrEn   = "MAG PP GrEn"
-	decknameEnGr   = "Mastronarde Attic Greek Principal Parts (English-to-Greek)"
+	decknameEnGr   = "Mastronarde AtticGreek Principal Parts (EnGr)"
 	csvCommentEnGr = "# This is an export of the MAG principal parts dataset in Anki CSV format (English-to-Greek)"
 	notetypeEnGr   = "MAG PP EnGr"
 	csvHeader      = "ID,Front,Back,Tags,DeckName"

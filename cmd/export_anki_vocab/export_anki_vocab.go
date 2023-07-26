@@ -17,8 +17,9 @@ import (
 )
 
 const (
-	deckNameGrEn   = "Mastronarde Attic Greek Vocab (Greek-to-English)"
+	deckNameGrEn   = "Mastronarde AtticGreek Vocab (GrEn)"
 	csvCommentGrEn = "# This is an export of the MAG vocab dataset in Anki CSV format (Greek-to-English)"
+	notetypeGrEn   = "MAG Vocab GrEn"
 	csvHeader      = "ID,Front,Back,Tags,DeckName"
 	deckColumnPos  = 5
 )
@@ -190,6 +191,7 @@ func exportVocab(wtr io.Writer, vocab []UnitVocab, opts Options) error {
 	fmt.Fprintln(wtr, csvCommentGrEn)
 	fmt.Fprintln(wtr, "#separator:Comma")
 	fmt.Fprintf(wtr, "#columns:%s\n", csvHeader)
+	fmt.Fprintf(wtr, "#notetype:%s\n", notetypeGrEn)
 	fmt.Fprintf(wtr, "#deck column:%d\n", deckColumnPos)
 	fmt.Fprintln(wtr, "#html:true")
 
@@ -260,7 +262,8 @@ func exportVocab(wtr io.Writer, vocab []UnitVocab, opts Options) error {
 						front = w.GrPl
 					}
 					back := cg.Gloss
-					back = reSemicolonParenthesis.ReplaceAllString(back, "<br>(")
+					back = reSemicolon.ReplaceAllString(back, "<br>")
+					//back = reSemicolonParenthesis.ReplaceAllString(back, "<br>(")
 					// Write entry
 					err := cwtr.Write([]string{
 						id2, front, back, tagstr, deck})
@@ -270,7 +273,8 @@ func exportVocab(wtr io.Writer, vocab []UnitVocab, opts Options) error {
 				}
 			} else {
 				back := w.En
-				back = reSemicolonParenthesis.ReplaceAllString(back, "<br>(")
+				back = reSemicolon.ReplaceAllString(back, "<br>")
+				//back = reSemicolonParenthesis.ReplaceAllString(back, "<br>(")
 				if w.EnExt != "" {
 					back += "<br><i>" + w.EnExt + "</i>"
 				}
