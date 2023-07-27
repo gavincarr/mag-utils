@@ -33,14 +33,15 @@ var (
 	rePluralMarker         = regexp.MustCompile(`^\(pl\.\)`)
 
 	posMap = map[string]string{
-		"adj":  "adjective",
-		"adv":  "adverb",
-		"conj": "conjunction",
-		"n":    "noun",
-		"part": "particle",
-		"prep": "preposition",
-		"pron": "pronoun",
-		"v":    "verb",
+		"adj":      "adjective",
+		"adv":      "adverb",
+		"conj":     "conjunction",
+		"n":        "noun",
+		"part":     "participle",
+		"particle": "particle",
+		"prep":     "preposition",
+		"pron":     "pronoun",
+		"v":        "verb",
 	}
 )
 

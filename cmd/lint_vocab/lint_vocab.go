@@ -15,7 +15,7 @@ import (
 )
 
 var (
-	rePos = regexp.MustCompile(`^(n|v|adj|adv|pron|prep|conj|part)$`)
+	rePos = regexp.MustCompile(`^(n|v|adj|adv|pron|prep|conj|particle|part)$`)
 )
 
 type Word struct {
