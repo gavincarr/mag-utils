@@ -18,21 +18,13 @@ import (
 )
 
 const (
-	csvHeader     = "ID,Front,Back,Tags,DeckName"
-	deckColumnPos = 5
+	deckname         = "Mastronarde AtticGreek Principal Parts"
+	csvHeader        = "ID,Front,Back,Tags,DeckName"
+	incrementalLabel = "Incr"
+	deckColumnPos    = 5
 )
 
 var (
-	decknameMap = map[int]map[bool]string{ // map[Num][Reverse]label
-		3: map[bool]string{
-			false: "Mastronarde AtticGreek Principal Parts 1-3 (GrEn)",
-			true:  "Mastronarde AtticGreek Principal Parts 1-3 (EnGr)",
-		},
-		4: map[bool]string{
-			false: "Mastronarde AtticGreek Principal Parts 1-3+6 (GrEn)",
-			true:  "Mastronarde AtticGreek Principal Parts 1-3+6 (EnGr)",
-		},
-	}
 	notetypeMap = map[bool]string{
 		false: "MAG PP GrEn",
 		true:  "MAG PP EnGr",
@@ -58,12 +50,12 @@ type UnitPP struct {
 
 // Options
 type Options struct {
-	Verbose bool   `short:"v" long:"verbose" description:"display verbose output"`
-	Unit    int    `short:"u" long:"unit" description:"export only this unit number"`
-	Num     int    `short:"n" long:"num" description:"export this many principal parts (3, 4, or 6)" default:"6"`
-	Reverse bool   `short:"r" long:"rev" description:"export in reverse output format i.e. English-to-Greek"`
-	Outfile string `short:"o" long:"outfile" description:"path to output filename (use stdout if not set)"`
-	Args    struct {
+	Verbose     bool   `short:"v" long:"verbose" description:"display verbose output"`
+	Unit        int    `short:"u" long:"unit" description:"export only this unit number"`
+	Incremental bool   `short:"i" long:"incr" description:"split into incremental subdecks of pp 1-3,6,4-5"`
+	Reverse     bool   `short:"r" long:"rev" description:"export in reverse output format i.e. English-to-Greek"`
+	Outfile     string `short:"o" long:"outfile" description:"path to output filename (use stdout if not set)"`
+	Args        struct {
 		Filename string `description:"pp yml dataset to read" default:"pp.yml"`
 	} `positional-args:"yes"`
 }
@@ -103,7 +95,13 @@ func exportSingleEntry(
 	return nil
 }
 
-func exportEntry(cwtr *csv.Writer, deck, id, label, ppstr string, reverse bool) error {
+func exportEntry(
+	cwtr *csv.Writer,
+	deckslice []string,
+	id, label, ppstr string,
+	reverse bool,
+) error {
+	deck := strings.Join(deckslice, "::")
 	matches := reAlternates.FindStringSubmatch(ppstr)
 	if matches == nil {
 		return exportSingleEntry(cwtr, deck, id, label, ppstr, "", 0, reverse)
@@ -116,7 +114,7 @@ func exportEntry(cwtr *csv.Writer, deck, id, label, ppstr string, reverse bool) 
 	paren2 := matches[5]
 
 	if paren1 != "" {
-		if paren2 != "" {
+		if paren2 == "" {
 			log.Fatal("missing paren2 in alternate:", ppstr)
 		}
 		part1 = "(" + part1 + ")"
@@ -135,6 +133,17 @@ func exportEntry(cwtr *csv.Writer, deck, id, label, ppstr string, reverse bool) 
 	return nil
 }
 
+func formatDeckname(opts Options) string {
+	direction := "GrEn"
+	if opts.Reverse {
+		direction = "EnGr"
+	}
+	if !opts.Incremental {
+		return fmt.Sprintf("%s (%s)", deckname, direction)
+	}
+	return fmt.Sprintf("%s (%s,%s)", deckname, incrementalLabel, direction)
+}
+
 func formatComment(deckname string) string {
 	return "# " + deckname + " Anki CSV export"
 }
@@ -144,7 +153,7 @@ func exportPP(wtr io.Writer, upp []UnitPP, opts Options) error {
 	cwtr := csv.NewWriter(wtr)
 	idmap := make(map[string]struct{})
 
-	deckname := decknameMap[opts.Num][opts.Reverse]
+	deckname := formatDeckname(opts)
 	comment := formatComment(deckname)
 	notetype := notetypeMap[opts.Reverse]
 
@@ -158,7 +167,10 @@ func exportPP(wtr io.Writer, upp []UnitPP, opts Options) error {
 
 	// Output pp entries
 	for _, u := range upp {
-		deck := strings.Join([]string{deckname, u.Name}, "::")
+		deckslice := []string{deckname, u.Name}
+		if opts.Incremental {
+			deckslice = []string{deckname, "PPA", u.Name}
+		}
 		for _, pp := range u.PP {
 			if opts.Unit > 0 && u.Unit != opts.Unit {
 				continue
@@ -173,19 +185,34 @@ func exportPP(wtr io.Writer, upp []UnitPP, opts Options) error {
 
 			// Export entries for each principal part
 			if pp.Future != "" {
-				exportEntry(cwtr, deck, id, "Future", pp.Future, opts.Reverse)
+				if opts.Incremental {
+					deckslice[1] = "PPA"
+				}
+				exportEntry(cwtr, deckslice, id, "Future", pp.Future, opts.Reverse)
 			}
 			if pp.Aorist != "" {
-				exportEntry(cwtr, deck, id, "Aorist", pp.Aorist, opts.Reverse)
+				if opts.Incremental {
+					deckslice[1] = "PPA"
+				}
+				exportEntry(cwtr, deckslice, id, "Aorist", pp.Aorist, opts.Reverse)
 			}
-			if opts.Num == 6 && pp.Perfect != "" {
-				exportEntry(cwtr, deck, id, "Perfect", pp.Perfect, opts.Reverse)
+			if pp.Perfect != "" {
+				if opts.Incremental {
+					deckslice[1] = "PPC"
+				}
+				exportEntry(cwtr, deckslice, id, "Perfect", pp.Perfect, opts.Reverse)
 			}
-			if opts.Num == 6 && pp.PerfMid != "" {
-				exportEntry(cwtr, deck, id, "Perfect Middle", pp.PerfMid, opts.Reverse)
+			if pp.PerfMid != "" {
+				if opts.Incremental {
+					deckslice[1] = "PPC"
+				}
+				exportEntry(cwtr, deckslice, id, "Perfect Middle", pp.PerfMid, opts.Reverse)
 			}
-			if opts.Num >= 4 && pp.AorPass != "" {
-				exportEntry(cwtr, deck, id, "Aorist Passive", pp.AorPass, opts.Reverse)
+			if pp.AorPass != "" {
+				if opts.Incremental {
+					deckslice[1] = "PPB"
+				}
+				exportEntry(cwtr, deckslice, id, "Aorist Passive", pp.AorPass, opts.Reverse)
 			}
 		}
 	}
@@ -243,9 +270,6 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Error: %s\n\n", err.Error())
 		parser.WriteHelp(os.Stderr)
 		os.Exit(2)
-	}
-	if opts.Num != 3 && opts.Num != 4 && opts.Num != 6 {
-		log.Fatal("Error: invalid -n/--num value (not 3, 4, or 6)")
 	}
 
 	wtr := os.Stdout
