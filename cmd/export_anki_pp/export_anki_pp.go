@@ -1,4 +1,5 @@
-// mag utility to export the pp.yml dataset to anki as a CSV
+// mag utility to export the pp.yml dataset as an Anki-format CSV
+// (in various formats)
 
 package main
 
@@ -17,17 +18,25 @@ import (
 )
 
 const (
-	decknameGrEn   = "Mastronarde AtticGreek Principal Parts (GrEn)"
-	csvCommentGrEn = "# This is an export of the MAG principal parts dataset in Anki CSV format (Greek-to-English)"
-	notetypeGrEn   = "MAG PP GrEn"
-	decknameEnGr   = "Mastronarde AtticGreek Principal Parts (EnGr)"
-	csvCommentEnGr = "# This is an export of the MAG principal parts dataset in Anki CSV format (English-to-Greek)"
-	notetypeEnGr   = "MAG PP EnGr"
-	csvHeader      = "ID,Front,Back,Tags,DeckName"
-	deckColumnPos  = 5
+	csvHeader     = "ID,Front,Back,Tags,DeckName"
+	deckColumnPos = 5
 )
 
 var (
+	decknameMap = map[int]map[bool]string{ // map[Num][Reverse]label
+		3: map[bool]string{
+			false: "Mastronarde AtticGreek Principal Parts 1-3 (GrEn)",
+			true:  "Mastronarde AtticGreek Principal Parts 1-3 (EnGr)",
+		},
+		4: map[bool]string{
+			false: "Mastronarde AtticGreek Principal Parts 1-3+6 (GrEn)",
+			true:  "Mastronarde AtticGreek Principal Parts 1-3+6 (EnGr)",
+		},
+	}
+	notetypeMap = map[bool]string{
+		false: "MAG PP GrEn",
+		true:  "MAG PP EnGr",
+	}
 	reAlternates = regexp.MustCompile(`(\()?(\p{Greek}+)\pZ+(or|and)\pZ+(\p{Greek}+)(\))?`)
 	reSpace      = regexp.MustCompile(`\pZ+`)
 )
@@ -51,7 +60,7 @@ type UnitPP struct {
 type Options struct {
 	Verbose bool   `short:"v" long:"verbose" description:"display verbose output"`
 	Unit    int    `short:"u" long:"unit" description:"export only this unit number"`
-	Num     int    `short:"n" long:"num" description:"export only the first N principal parts (2-6)" default:"6"`
+	Num     int    `short:"n" long:"num" description:"export this many principal parts (3, 4, or 6)" default:"6"`
 	Reverse bool   `short:"r" long:"rev" description:"export in reverse output format i.e. English-to-Greek"`
 	Outfile string `short:"o" long:"outfile" description:"path to output filename (use stdout if not set)"`
 	Args    struct {
@@ -126,19 +135,18 @@ func exportEntry(cwtr *csv.Writer, deck, id, label, ppstr string, reverse bool) 
 	return nil
 }
 
+func formatComment(deckname string) string {
+	return "# " + deckname + " Anki CSV export"
+}
+
 // exportPP exports principal parts in Anki CSV format to wtr
 func exportPP(wtr io.Writer, upp []UnitPP, opts Options) error {
 	cwtr := csv.NewWriter(wtr)
 	idmap := make(map[string]struct{})
 
-	comment := csvCommentGrEn
-	notetype := notetypeGrEn
-	deckname := decknameGrEn
-	if opts.Reverse {
-		comment = csvCommentEnGr
-		notetype = notetypeEnGr
-		deckname = decknameEnGr
-	}
+	deckname := decknameMap[opts.Num][opts.Reverse]
+	comment := formatComment(deckname)
+	notetype := notetypeMap[opts.Reverse]
 
 	// Output file headers
 	fmt.Fprintln(wtr, comment)
@@ -167,16 +175,16 @@ func exportPP(wtr io.Writer, upp []UnitPP, opts Options) error {
 			if pp.Future != "" {
 				exportEntry(cwtr, deck, id, "Future", pp.Future, opts.Reverse)
 			}
-			if opts.Num >= 3 && pp.Aorist != "" {
+			if pp.Aorist != "" {
 				exportEntry(cwtr, deck, id, "Aorist", pp.Aorist, opts.Reverse)
 			}
-			if opts.Num >= 4 && pp.Perfect != "" {
+			if opts.Num == 6 && pp.Perfect != "" {
 				exportEntry(cwtr, deck, id, "Perfect", pp.Perfect, opts.Reverse)
 			}
-			if opts.Num >= 5 && pp.PerfMid != "" {
+			if opts.Num == 6 && pp.PerfMid != "" {
 				exportEntry(cwtr, deck, id, "Perfect Middle", pp.PerfMid, opts.Reverse)
 			}
-			if opts.Num == 6 && pp.AorPass != "" {
+			if opts.Num >= 4 && pp.AorPass != "" {
 				exportEntry(cwtr, deck, id, "Aorist Passive", pp.AorPass, opts.Reverse)
 			}
 		}
@@ -236,8 +244,8 @@ func main() {
 		parser.WriteHelp(os.Stderr)
 		os.Exit(2)
 	}
-	if opts.Num < 2 || opts.Num > 6 {
-		log.Fatal("Error: invalid -n/--num value")
+	if opts.Num != 3 && opts.Num != 4 && opts.Num != 6 {
+		log.Fatal("Error: invalid -n/--num value (not 3, 4, or 6)")
 	}
 
 	wtr := os.Stdout
