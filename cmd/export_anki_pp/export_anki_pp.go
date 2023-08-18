@@ -21,6 +21,9 @@ const (
 	deckname         = "Mastronarde AtticGreek Principal Parts"
 	csvHeader        = "ID,Front,Back,Tags,DeckName"
 	incrementalLabel = "Incr"
+	pp1              = "PPA"
+	pp2              = "PPB"
+	pp3              = "PPC"
 	deckColumnPos    = 5
 )
 
@@ -169,7 +172,7 @@ func exportPP(wtr io.Writer, upp []UnitPP, opts Options) error {
 	for _, u := range upp {
 		deckslice := []string{deckname, u.Name}
 		if opts.Incremental {
-			deckslice = []string{deckname, "PPA", u.Name}
+			deckslice = []string{deckname, pp1, u.Name}
 		}
 		for _, pp := range u.PP {
 			if opts.Unit > 0 && u.Unit != opts.Unit {
@@ -186,31 +189,31 @@ func exportPP(wtr io.Writer, upp []UnitPP, opts Options) error {
 			// Export entries for each principal part
 			if pp.Future != "" {
 				if opts.Incremental {
-					deckslice[1] = "PPA"
+					deckslice[1] = pp1
 				}
 				exportEntry(cwtr, deckslice, id, "Future", pp.Future, opts.Reverse)
 			}
 			if pp.Aorist != "" {
 				if opts.Incremental {
-					deckslice[1] = "PPA"
+					deckslice[1] = pp1
 				}
 				exportEntry(cwtr, deckslice, id, "Aorist", pp.Aorist, opts.Reverse)
 			}
 			if pp.Perfect != "" {
 				if opts.Incremental {
-					deckslice[1] = "PPC"
+					deckslice[1] = pp3
 				}
 				exportEntry(cwtr, deckslice, id, "Perfect", pp.Perfect, opts.Reverse)
 			}
 			if pp.PerfMid != "" {
 				if opts.Incremental {
-					deckslice[1] = "PPC"
+					deckslice[1] = pp3
 				}
 				exportEntry(cwtr, deckslice, id, "Perfect Middle", pp.PerfMid, opts.Reverse)
 			}
 			if pp.AorPass != "" {
 				if opts.Incremental {
-					deckslice[1] = "PPB"
+					deckslice[1] = pp2
 				}
 				exportEntry(cwtr, deckslice, id, "Aorist Passive", pp.AorPass, opts.Reverse)
 			}
