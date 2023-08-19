@@ -16,7 +16,7 @@ import (
 )
 
 var (
-	reEntry = regexp.MustCompile(`^\(?-?\p{Greek}+( ((or|and) )?\(?-?\p{Greek}+\)?)?(\pZ+\(stem \p{Greek}+-\))?\)?$`)
+	reEntry = regexp.MustCompile(`^\(?-?\p{Greek}+( ((or|and)( \(rare\))? )?\(?-?\p{Greek}+\)?)?(\pZ+\(stem \p{Greek}+-\))?\)?$`)
 )
 
 type Record struct {
