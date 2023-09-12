@@ -104,6 +104,9 @@ func exportEntry(
 	id, label, ppstr string,
 	reverse bool,
 ) error {
+	if id == "" {
+		return fmt.Errorf("empty id for %q %q", label, ppstr)
+	}
 	deck := strings.Join(deckslice, "::")
 	matches := reAlternates.FindStringSubmatch(ppstr)
 	if matches == nil {
@@ -181,41 +184,73 @@ func exportPP(wtr io.Writer, upp []UnitPP, opts Options) error {
 
 			// Make sure ids are unique
 			id := pp.Present
-			if _, exists := idmap[id]; exists {
-				log.Fatal("duplicate ids found: ", id)
+			if id == "" && pp.Aorist != "" {
+				id = pp.Aorist
 			}
-			idmap[id] = struct{}{}
+			if id != "" {
+				if _, exists := idmap[id]; exists {
+					log.Fatal("duplicate ids found: ", id)
+				}
+				idmap[id] = struct{}{}
+			}
 
 			// Export entries for each principal part
+			var err error
 			if pp.Future != "" {
 				if opts.Incremental {
 					deckslice[1] = pp1
 				}
-				exportEntry(cwtr, deckslice, id, "Future", pp.Future, opts.Reverse)
+				err = exportEntry(cwtr, deckslice, id, "Future",
+					pp.Future, opts.Reverse)
+				if err != nil {
+					return err
+				}
 			}
 			if pp.Aorist != "" {
+				if id == pp.Aorist {
+					id = pp.Future
+				}
 				if opts.Incremental {
 					deckslice[1] = pp1
 				}
-				exportEntry(cwtr, deckslice, id, "Aorist", pp.Aorist, opts.Reverse)
+				err = exportEntry(cwtr, deckslice, id, "Aorist",
+					pp.Aorist, opts.Reverse)
+				if err != nil {
+					return err
+				}
+				if id == pp.Future {
+					id = pp.Aorist
+				}
 			}
 			if pp.Perfect != "" {
 				if opts.Incremental {
 					deckslice[1] = pp3
 				}
-				exportEntry(cwtr, deckslice, id, "Perfect", pp.Perfect, opts.Reverse)
+				err = exportEntry(cwtr, deckslice, id, "Perfect",
+					pp.Perfect, opts.Reverse)
+				if err != nil {
+					return err
+				}
 			}
 			if pp.PerfMid != "" {
 				if opts.Incremental {
 					deckslice[1] = pp3
 				}
-				exportEntry(cwtr, deckslice, id, "Perfect Middle", pp.PerfMid, opts.Reverse)
+				err = exportEntry(cwtr, deckslice, id, "Perfect Middle",
+					pp.PerfMid, opts.Reverse)
+				if err != nil {
+					return err
+				}
 			}
 			if pp.AorPass != "" {
 				if opts.Incremental {
 					deckslice[1] = pp2
 				}
-				exportEntry(cwtr, deckslice, id, "Aorist Passive", pp.AorPass, opts.Reverse)
+				err = exportEntry(cwtr, deckslice, id, "Aorist Passive",
+					pp.AorPass, opts.Reverse)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
